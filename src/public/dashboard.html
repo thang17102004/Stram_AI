@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI File Processor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f9f9f9;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .upload-area, .actions, .output, .export-buttons {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+
+    .upload-area input[type="file"] {
+      margin-top: 10px;
+    }
+
+    .actions button, .export-buttons button {
+      margin: 10px 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      transition: background-color 0.2s ease;
+    }
+
+    .actions button:hover, .export-buttons button:hover {
+      background-color: #45a049;
+    }
+
+    .output {
+      min-height: 200px;
+      text-align: left;
+      white-space: pre-wrap;
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <div class="upload-area">
+      <h2>📄 Tải file văn bản lên</h2>
+      <input type="file" id="fileInput" required />
+    </div>
+
+    <div class="actions">
+      <button onclick="handleFunction('fixSpell')">Sửa lỗi chính tả</button>
+      <button onclick="handleFunction('summary')">Tóm tắt</button>
+      <button onclick="handleFunction('convert')">Chuyển sang pdf</button>
+      <button onclick="handleFunction('analyze')">Phân tích trích xuất</button>
+      <!-- Bạn có thể thêm nút khác ở đây -->
+    </div>
+
+    <div class="output" id="output">
+      <p><i>Kết quả sẽ hiển thị tại đây...</i></p>
+    </div>
+
+    <div class="export-buttons">
+      <button onclick="exportTo('word')">Xuất ra Word</button>
+      <button onclick="exportTo('pdf')">Xuất ra PDF</button>
+    </div>
+
+  </div>
+
+  <script>
+    // Chức năng khi thực hiện trên file
+    function handleFunction(action) {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) {
+        alert('Vui lòng chọn file!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('action', action);
+
+      const output = document.getElementById('output');
+      output.innerText = '⏳ Đang xử lý...';
+
+      fetch(`/handleFunction/${action}`, {
+      method: 'POST',
+      body: formData //Tự động tạo multipart/form-data
+      })
+      .then(res => {
+        if (action === 'convert') {
+          return res.blob();
+        } else {
+          return res.json();
+        }
+      })
+      .then(data => {
+      if (action === 'convert') {
+        const url = window.URL.createObjectURL(data);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'output.pdf';
+        a.click();
+        window.URL.revokeObjectURL(url);
+        output.innerText = '✅ File PDF đã được tải về!';
+      } else {
+        output.innerText = data.result || 'Không có kết quả';
+      }
+    })
+      .catch(err => {
+        output.innerText = '❌ Lỗi xử lý: ' + err.message;
+        console.error("Lỗi phía client:", err);
+      });
+    }
+
+    //Xuất kết quả docx, pdf
+    function exportTo(format) {
+    const output = document.getElementById("output");
+    const content = output.innerText;
+
+    fetch(`/handleFunction/export${format === "word" ? "Word" : "Pdf"}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ content })
+    })
+    .then(res => res.blob())
+    .then(blob => {
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `ketqua.${format}`;
+      link.click();
+    })
+    .catch(err => {
+      console.error("Export lỗi:", err);
+      alert("❌ Lỗi export file!");
+    });
+  }
+  </script>
+</body>
+</html>

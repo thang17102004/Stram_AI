@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h2>Đăng nhập</h2>
+    <form action="/login" method="POST">
+    <input type="email" name="email" placeholder="email" required>
+    <input type="password" name="password" placeholder="Mật khẩu" required>
+    <button type="submit">Đăng nhập</button>
+    </form>
+
+    <a href="/register">Chưa có tài khoản? Đăng ký</a>
+     <!-- Thẻ hiển thị lỗi -->
+  <p id="error-message" style="color: red;"></p>
+
+  <script>
+    // Lấy query string trên URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+
+    if (error === '1') {
+      document.getElementById('error-message').textContent = "Email hoặc mật khẩu không đúng!";
+    }
+  </script>
+</body>
+</html>
